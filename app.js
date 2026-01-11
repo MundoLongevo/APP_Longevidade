@@ -6,6 +6,15 @@
 // =====================
 const $ = (id) => document.getElementById(id);
 
+function escapeHtml(str){
+  return String(str ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/\'/g,"&#039;");
+}
+
 function openModal(el){ el.classList.add("show"); el.setAttribute("aria-hidden","false"); }
 function closeModal(el){ el.classList.remove("show"); el.setAttribute("aria-hidden","true"); }
 
@@ -457,9 +466,134 @@ const dayTitle = $("dayTitle");
 const dayContent = $("dayContent");
 
 function ensureEntry(k){
-  entries[k] = entries[k] || { statuses:{} };
+  entries[k] = entries[k] || { statuses:{}, notes:{}, expenses:[], avoided:null };
+  entries[k].statuses = entries[k].statuses || {};
+  entries[k].notes = entries[k].notes || {};
+  entries[k].expenses = entries[k].expenses || [];
+  if(typeof entries[k].avoided === "undefined") entries[k].avoided = null;
   return entries[k];
 }
+
+
+/* =====================
+   Finanças (Gastos do dia)
+   ===================== */
+function parseMoneyBR(v){
+  const s = String(v ?? "").trim().replace(/\./g,"").replace(",",".").replace(/[^0-9.\-]/g,"");
+  const n = Number(s);
+  return isFinite(n) ? n : NaN;
+}
+function formatBRL(n){
+  try{
+    return (n||0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
+  }catch(e){
+    return "R$ " + (n||0).toFixed(2).replace(".",",");
+  }
+}
+function addExpense(dayKey, reason, value, category){
+  const e = ensureEntry(dayKey);
+  const v = parseMoneyBR(value);
+  const r = (reason || "").trim();
+  if(!r) return { ok:false, msg:"Informe o motivo do gasto." };
+  if(!isFinite(v) || v <= 0) return { ok:false, msg:"Informe um valor válido (ex.: 12,50)." };
+
+  e.expenses.push({
+    reason: r,
+    value: v,
+    category: (category || "").trim(),
+    ts: Date.now()
+  });
+  saveJSON(LS.entries, entries);
+  return { ok:true };
+}
+function removeExpense(dayKey, idx){
+  const e = ensureEntry(dayKey);
+  e.expenses.splice(idx, 1);
+  saveJSON(LS.entries, entries);
+}
+function clearExpenses(dayKey){
+  const e = ensureEntry(dayKey);
+  e.expenses = [];
+  saveJSON(LS.entries, entries);
+}
+function getExpenses(dayKey){
+  return (ensureEntry(dayKey).expenses || []);
+}
+function setAvoided(dayKey, reason, value){
+  const e = ensureEntry(dayKey);
+  const r = (reason || "").trim();
+  const v = String(value||"").trim() ? parseMoneyBR(value) : null;
+  e.avoided = r ? { reason:r, value: (isFinite(v) && v>0) ? v : null, ts: Date.now() } : null;
+  saveJSON(LS.entries, entries);
+}
+function getAvoided(dayKey){
+  return ensureEntry(dayKey).avoided || null;
+}
+function weeklyExpenseSummary(endDayKey){
+  const end = new Date(endDayKey + "T00:00:00");
+  const keys = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(end);
+    d.setDate(end.getDate()-i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    keys.push(`${y}-${m}-${dd}`);
+  }
+  let total = 0;
+  const byReason = new Map();
+  const byCat = new Map();
+  for(const k of keys){
+    const exps = (entries[k]?.expenses) || [];
+    for(const it of exps){
+      total += (it.value||0);
+      const rk = (it.reason||"").trim();
+      if(rk) byReason.set(rk, (byReason.get(rk)||0) + (it.value||0));
+      const ck = (it.category||"").trim() || "Sem categoria";
+      byCat.set(ck, (byCat.get(ck)||0) + (it.value||0));
+    }
+  }
+  const topReasons = [...byReason.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const topCats = [...byCat.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+  return { keys, total, topReasons, topCats };
+}
+function exportExpensesCSV(daysBack=30){
+  const rows = [["data","motivo","categoria","valor"]];
+  const d0 = new Date();
+  d0.setHours(0,0,0,0);
+
+  for(let i=daysBack-1;i>=0;i--){
+    const d = new Date(d0);
+    d.setDate(d0.getDate()-i);
+    const y=d.getFullYear();
+    const m=String(d.getMonth()+1).padStart(2,"0");
+    const dd=String(d.getDate()).padStart(2,"0");
+    const k=`${y}-${m}-${dd}`;
+    const exps = (entries[k]?.expenses) || [];
+    for(const it of exps){
+      rows.push([k, (it.reason||"").replace(/
+/g," "), (it.category||""), String(it.value||0).replace(".",",")]);
+    }
+  }
+  const csv = rows.map(r => r.map(cell => {
+    const s = String(cell ?? "");
+    const safe = s.includes('"') ? s.replace(/"/g,'""') : s;
+    return (safe.includes(",") || safe.includes("
+") || safe.includes('"')) ? `"${safe}"` : safe;
+  }).join(",")).join("
+");
+
+  const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `fq5c_gastos_${daysBack}d.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+
 
 function setStatus(dayKey, verbKey, status){
   const e = ensureEntry(dayKey);
@@ -600,6 +734,192 @@ function renderDayPanel(k){
   `;
   dayContent.appendChild(photoBox);
   photoBox.querySelector("#btnOpenDiaryFromDay").onclick = () => btnDiary?.click?.();
+
+
+// Gastos do dia (agenda financeira simples)
+const financeBox = document.createElement("div");
+financeBox.className = "pill";
+financeBox.innerHTML = `
+  <div class="pill-head">
+    <div class="verb-chip">
+      <div class="verb-icon">💰</div>
+      <div class="verb-label">Gastos do dia</div>
+    </div>
+    <div class="pill-actions">
+      <button class="secondary" id="btnExportCSV">Exportar CSV (30d)</button>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:10px">
+    <input id="expReason" type="text" placeholder="Motivo do gasto (ex.: mercado, remédio, café)" />
+    <input id="expValue" type="text" inputmode="decimal" placeholder="Valor (R$) ex.: 12,50" />
+  </div>
+
+  <div class="grid2" style="margin-top:10px">
+    <select id="expCat">
+      <option value="">Categoria (opcional)</option>
+      <option>Essencial</option>
+      <option>Saúde</option>
+      <option>Casa</option>
+      <option>Transporte</option>
+      <option>Lazer</option>
+      <option>Outros</option>
+    </select>
+    <div class="row" style="gap:10px; justify-content:flex-end">
+      <button class="primary" id="btnAddExp">Adicionar</button>
+      <button class="ghost" id="btnClearExp">Limpar</button>
+    </div>
+  </div>
+
+  <div class="muted" id="expMsg" style="margin-top:8px"></div>
+
+  <div class="table-wrap">
+    <table class="table" id="expTable">
+      <thead>
+        <tr>
+          <th>Motivo</th>
+          <th>R$</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+          <td><strong>Total do dia</strong></td>
+          <td id="expTotal"><strong>R$ 0,00</strong></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="note-wrap" style="margin-top:12px">
+    <div class="note-label">Gasto evitado hoje (vitória silenciosa)</div>
+    <div class="grid2">
+      <input id="avoReason" type="text" placeholder="Ex.: não comprei doce / não pedi delivery" />
+      <input id="avoValue" type="text" inputmode="decimal" placeholder="Valor evitado (opcional) ex.: 35,00" />
+    </div>
+    <div class="row" style="justify-content:flex-end; margin-top:10px">
+      <button class="secondary" id="btnSaveAvoided">Salvar</button>
+    </div>
+    <div class="muted" id="avoMsg" style="margin-top:6px"></div>
+  </div>
+
+  <div class="note-wrap" style="margin-top:12px">
+    <div class="note-label">Resumo da semana (últimos 7 dias)</div>
+    <div id="weekSummary" class="practice-text"></div>
+  </div>
+`;
+dayContent.appendChild(financeBox);
+
+function renderExpensesUI(){
+  const tbody = financeBox.querySelector("#expTable tbody");
+  const totalEl = financeBox.querySelector("#expTotal");
+  const list = getExpenses(k);
+  tbody.innerHTML = "";
+  let total = 0;
+
+  list.forEach((it, idx) => {
+    total += (it.value||0);
+    const tr = document.createElement("tr");
+    const cat = it.category ? `<span class="tag">${escapeHtml(it.category)}</span>` : ``;
+    tr.innerHTML = `
+      <td>${escapeHtml(it.reason)} ${cat}</td>
+      <td>${formatBRL(it.value||0)}</td>
+      <td><button class="ghost small" data-del="${idx}">Excluir</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  totalEl.innerHTML = `<strong>${formatBRL(total)}</strong>`;
+
+  tbody.querySelectorAll("button[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      removeExpense(k, Number(btn.getAttribute("data-del")));
+      renderExpensesUI();
+      renderWeekSummary();
+    });
+  });
+}
+
+function renderWeekSummary(){
+  const sumEl = financeBox.querySelector("#weekSummary");
+  const s = weeklyExpenseSummary(k);
+  const lines = [];
+  lines.push(`<strong>Total na semana:</strong> ${formatBRL(s.total)}`);
+
+  if(s.topCats.length){
+    lines.push(`<div style="margin-top:8px"><strong>Top categorias:</strong></div>`);
+    lines.push(`<ul class="mini-list">` + s.topCats.map(([c,v])=>`<li>${escapeHtml(c)} • ${formatBRL(v)}</li>`).join("") + `</ul>`);
+  }
+  if(s.topReasons.length){
+    lines.push(`<div style="margin-top:8px"><strong>Top motivos:</strong></div>`);
+    lines.push(`<ul class="mini-list">` + s.topReasons.map(([r,v])=>`<li>${escapeHtml(r)} • ${formatBRL(v)}</li>`).join("") + `</ul>`);
+  }
+
+  const av = getAvoided(k);
+  if(av){
+    lines.push(`<div style="margin-top:8px"><strong>Gasto evitado hoje:</strong> ${escapeHtml(av.reason)}${(av.value?` • ${formatBRL(av.value)}`:"")}</div>`);
+  }
+  sumEl.innerHTML = lines.join("");
+}
+
+// Wire finance controls
+const expReason = financeBox.querySelector("#expReason");
+const expValue = financeBox.querySelector("#expValue");
+const expCat = financeBox.querySelector("#expCat");
+const expMsg = financeBox.querySelector("#expMsg");
+const btnAddExp = financeBox.querySelector("#btnAddExp");
+const btnClearExp = financeBox.querySelector("#btnClearExp");
+const btnExportCSV = financeBox.querySelector("#btnExportCSV");
+
+btnAddExp.onclick = () => {
+  const res = addExpense(k, expReason.value, expValue.value, expCat.value);
+  expMsg.textContent = res.ok ? "" : res.msg;
+  if(res.ok){
+    expReason.value = "";
+    expValue.value = "";
+    expCat.value = "";
+    renderExpensesUI();
+    renderWeekSummary();
+    expReason.focus();
+  }
+};
+btnClearExp.onclick = () => {
+  if(confirm("Limpar todos os gastos deste dia?")){
+    clearExpenses(k);
+    renderExpensesUI();
+    renderWeekSummary();
+  }
+};
+btnExportCSV.onclick = () => exportExpensesCSV(30);
+
+[expReason, expValue].forEach(el=>{
+  el.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") btnAddExp.click();
+  });
+});
+
+// Avoided
+const avoReason = financeBox.querySelector("#avoReason");
+const avoValue = financeBox.querySelector("#avoValue");
+const avoMsg = financeBox.querySelector("#avoMsg");
+const btnSaveAvoided = financeBox.querySelector("#btnSaveAvoided");
+const existingAvoided = getAvoided(k);
+if(existingAvoided){
+  avoReason.value = existingAvoided.reason || "";
+  avoValue.value = existingAvoided.value ? String(existingAvoided.value).replace(".",",") : "";
+}
+btnSaveAvoided.onclick = () => {
+  setAvoided(k, avoReason.value, avoValue.value);
+  avoMsg.textContent = "Salvo.";
+  setTimeout(()=>{ avoMsg.textContent=""; }, 1200);
+  renderWeekSummary();
+};
+
+renderExpensesUI();
+renderWeekSummary();
+
 
   for(const v of VERBS){
     renderVerbCard({
@@ -1511,3 +1831,133 @@ document.addEventListener("click", (e)=>{
     if(e.target === m) closeModal(m);
   }
 });
+
+
+
+/* ===== PDF Diário + Finanças ===== */
+function generateDailyPDF(dayKey){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:"mm", format:"a4" });
+
+  let y = 15;
+  const lh = 7;
+  const margin = 15;
+
+  function title(t){
+    doc.setFontSize(16);
+    doc.text(t, margin, y); y += lh+2;
+    doc.setFontSize(11);
+  }
+  function line(t){
+    doc.text(String(t), margin, y); y += lh;
+    if(y > 280){ doc.addPage(); y = 15; }
+  }
+
+  title("Diário FQ5C — " + dayKey);
+
+  // Verbs statuses
+  const e = ensureEntry(dayKey);
+  line("Verbos:");
+  for(const v of VERBS){
+    const st = e.statuses[v.key] ? "✓" : "—";
+    line(`• ${v.label}: ${st}`);
+  }
+  y += 4;
+
+  // Notes
+  line("Registros livres:");
+  for(const v of VERBS){
+    const n = (e.notes && e.notes[v.key]) ? e.notes[v.key] : "";
+    if(n) line(`• ${v.label}: ${n}`);
+  }
+  y += 4;
+
+  // Expenses
+  line("Gastos do dia:");
+  let total = 0;
+  (e.expenses||[]).forEach(it=>{
+    total += it.value||0;
+    line(`• ${it.reason} — ${formatBRL(it.value||0)} ${it.category?("("+it.category+")"):""}`);
+  });
+  line("Total do dia: " + formatBRL(total));
+
+  // Avoided
+  if(e.avoided){
+    y += 4;
+    line("Gasto evitado:");
+    line(`• ${e.avoided.reason} ${e.avoided.value?("— "+formatBRL(e.avoided.value)):""}`);
+  }
+
+  doc.save(`FQ5C_${dayKey}.pdf`);
+}
+
+
+
+/* ===== PDF Semanal ===== */
+function generateWeeklyPDF(endDayKey){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:"mm", format:"a4" });
+
+  let y = 15;
+  const lh = 7;
+  const margin = 15;
+
+  function title(t){
+    doc.setFontSize(16);
+    doc.text(t, margin, y); y += lh+2;
+    doc.setFontSize(11);
+  }
+  function line(t){
+    doc.text(String(t), margin, y); y += lh;
+    if(y > 280){ doc.addPage(); y = 15; }
+  }
+
+  const sum = weeklyExpenseSummary(endDayKey);
+  title("Diário FQ5C — Resumo Semanal");
+
+  line("Período:");
+  line(sum.keys[0] + " a " + sum.keys[sum.keys.length-1]);
+  y+=4;
+
+  // Verb counts
+  line("Frequência dos verbos:");
+  const counts={};
+  VERBS.forEach(v=>counts[v.key]=0);
+
+  sum.keys.forEach(k=>{
+    const e = entries[k];
+    if(!e) return;
+    VERBS.forEach(v=>{
+      if(e.statuses && e.statuses[v.key]) counts[v.key]++;
+    });
+  });
+
+  VERBS.forEach(v=>{
+    line(`• ${v.label}: ${counts[v.key]} dias`);
+  });
+
+  y+=4;
+  line("Gastos da semana:");
+  line("Total: " + formatBRL(sum.total));
+
+  if(sum.topCats.length){
+    y+=2; line("Principais categorias:");
+    sum.topCats.forEach(([c,v])=> line(`• ${c}: ${formatBRL(v)}`));
+  }
+
+  if(sum.topReasons.length){
+    y+=2; line("Principais motivos:");
+    sum.topReasons.forEach(([r,v])=> line(`• ${r}: ${formatBRL(v)}`));
+  }
+
+  y+=4;
+  line("Vitórias silenciosas (gastos evitados):");
+  sum.keys.forEach(k=>{
+    const e = entries[k];
+    if(e && e.avoided){
+      line(`• ${k}: ${e.avoided.reason}${e.avoided.value?(" ("+formatBRL(e.avoided.value)+")"):""}`);
+    }
+  });
+
+  doc.save(`FQ5C_Semanal_${endDayKey}.pdf`);
+}

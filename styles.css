@@ -394,3 +394,126 @@ hr{border:none; border-top:1px solid var(--line); margin:12px 0}
 .bhead{font-weight:800;margin-bottom:6px}
 .btext{font-size:13px;color:var(--txt);opacity:.95;line-height:1.35}
 .journey-actions{margin-top:12px;display:flex;justify-content:flex-end}
+
+
+
+/* ===== Finanças ===== */
+.table-wrap{ overflow:auto; margin-top:10px; }
+.table{ width:100%; border-collapse: collapse; font-size: 0.98rem; }
+.table th, .table td{ padding:10px; border-bottom:1px solid var(--line); vertical-align: top; }
+.table th{ text-align:left; color: var(--muted); font-weight:600; }
+.tag{
+  display:inline-block; margin-left:8px; padding:2px 10px;
+  border:1px solid var(--line); border-radius:999px; font-size:0.82rem;
+  opacity:.95;
+}
+.mini-list{ margin:8px 0 0 18px; padding:0; }
+.mini-list li{ margin:6px 0; color: var(--txt); }
+.grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+@media (max-width: 680px){
+  .grid2{ grid-template-columns: 1fr; }
+}
+
+
+/* ===== Responsividade (prioridade: celular) ===== */
+*{ -webkit-tap-highlight-color: transparent; }
+body{ padding-bottom: env(safe-area-inset-bottom); }
+
+.container{ max-width: 980px; margin: 0 auto; padding: 14px; }
+
+input, select, textarea, button{
+  font-size: 1rem;
+}
+button{ touch-action: manipulation; }
+
+.pill-head, .modal-head{
+  gap: 10px;
+}
+.pill-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.row{
+  flex-wrap: wrap;
+}
+.row > *{
+  min-width: 0;
+}
+
+@media (max-width: 680px){
+  :root{ font-size: 18px; } /* leitura confortável em celular */
+  .container{ padding: 12px; }
+
+  /* topo / navegação */
+  .topbar{
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    backdrop-filter: blur(8px);
+  }
+  .tabs{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tabs button{
+    flex: 1 1 auto;
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+
+  /* cards e “pills” */
+  .card, .pill{
+    padding: 14px;
+    border-radius: 18px;
+  }
+  .pill-head{
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .pill-actions{
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .pill-actions button{
+    width: 100%;
+  }
+
+  /* botões grandes e fáceis de tocar */
+  button.primary, button.secondary, button.ghost{
+    min-height: 46px;
+  }
+
+  /* tabelas */
+  .table{
+    font-size: 0.92rem;
+  }
+  .table th, .table td{
+    padding: 8px;
+  }
+
+  /* modais */
+  .modal-card{
+    width: calc(100% - 18px);
+    max-width: 720px;
+    margin: 0 9px;
+    border-radius: 18px;
+  }
+  .modal-body{
+    max-height: 78vh;
+    overflow:auto;
+  }
+}
+
+@media (max-width: 420px){
+  :root{ font-size: 19px; }
+  .tabs button{
+    padding: 12px 12px;
+  }
+  .verb-icon{
+    width: 40px;
+    height: 40px;
+  }
+}
