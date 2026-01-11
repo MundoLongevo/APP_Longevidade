@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FQ5C • Longevidade ativa</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2f8f6b" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="logo">FQ5C</div>
+      <div class="meta">
+        <div class="title">Longevidade ativa, combativa, positiva e com sentido</div>
+        <div class="sub">Criado por Ricardo de Faria Barros · <a href="mailto:ricardodefariobarros@gmail.com">ricardodefariobarros@gmail.com</a></div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button class="ghost" id="btnToday">Hoje</button>
+      <button class="ghost" id="btnMonth">Meu mês</button>
+      <button class="ghost" id="btnMission">Missão da semana</button>
+      <button class="ghost" id="btnDiary">Diário de bordo</button>
+      <button class="ghost" id="btnAlerts">Alertas</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>Seu dia de presença</h2>
+      <p class="small">Marque o possível. O objetivo é vida em movimento — sem cobrança.</p>
+      <div class="mode-row">
+        <label class="switch">
+          <input type="checkbox" id="toggleGentleMode" />
+          <span class="slider"></span>
+        </label>
+        <div class="mode-text">
+          <div class="mode-title">Dias difíceis</div>
+          <div class="small">Ative para receber sugestões mais gentis e de baixa energia.</div>
+        </div>
+      </div>
+
+      <div id="todayPanel" class="today"></div>
+      <div class="row">
+        <button class="primary" id="btnOpenToday">Abrir painel do dia</button>
+        <button class="secondary" id="btnOpenWeeklyNow2">Revisão semanal</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Como usar</h2>
+      <ul class="small">
+        <li><b>Fazer</b>, <b>Querer</b>, <b>Cuidar</b>, <b>Conhecer</b>, <b>Conversar</b>, <b>Compartilhar</b>, <b>Curtir</b>.</li>
+        <li>O app sugere 1 prática por eixo por dia e ajusta o foco conforme seu equilíbrio recente.</li>
+        <li>Alertas são opcionais e gentis.</li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- Modal Dia -->
+  <div class="modal" id="dayModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title" id="dayTitle">Hoje</div>
+        <button class="ghost" id="btnCloseDay">Fechar</button>
+      </div>
+      <div class="modal-body">
+        <div id="dayContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Mês -->
+  <div class="modal" id="monthModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title" id="monthTitle">Meu mês</div>
+        <button class="ghost" id="btnCloseMonth">Fechar</button>
+      </div>
+      <div class="modal-body">
+        <div class="month-nav">
+          <button class="secondary" id="btnPrevMonth">◀</button>
+          <div class="small" id="monthLabel"></div>
+          <button class="secondary" id="btnNextMonth">▶</button>
+        </div>
+        <div id="monthGrid" class="month-grid"></div>
+        <hr />
+        <div class="small" id="monthHint"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Missão -->
+  <div class="modal" id="missionModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title" id="missionTitle">Missão da semana</div>
+        <button class="ghost" id="btnCloseMission">Fechar</button>
+      </div>
+      <div class="modal-body">
+        <div class="mission-hero">
+          <div class="mission-kicker" id="missionKicker"></div>
+          <div class="mission-desc" id="missionDesc"></div>
+
+          <div class="mission-progress">
+            <div class="bar"><div class="bar-fill" id="missionBar"></div></div>
+            <div class="small" id="missionProgressText"></div>
+          </div>
+
+          <div class="mission-actions">
+            <button class="secondary" id="btnResetMission">Reiniciar semana</button>
+            <button class="secondary" id="btnMissionHistory">Histórico</button>
+          </div>
+        </div>
+
+        <h3 class="section-title" style="margin-top:14px;">Ações FQ5C (marque o possível)</h3>
+        <div id="missionTasks" class="mission-tasks"></div>
+
+        <div class="small" style="margin-top:10px;">
+          Criado por Ricardo de Faria Barros ·
+          <a href="mailto:ricardodefariobarros@gmail.com">ricardodefariobarros@gmail.com</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Histórico de Missões -->
+  <div class="modal" id="missionHistoryModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Histórico de missões</div>
+        <button class="ghost" id="btnCloseMissionHistory">Fechar</button>
+      </div>
+      <div class="modal-body">
+        <div id="missionHistoryList" class="mission-history"></div>
+        <div class="small" style="margin-top:10px;">
+          Dica: o histórico não é para cobrança. É para você ver o caminho.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Diário de Bordo -->
+  <div class="modal" id="diaryModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Diário de Bordo da Vida</div>
+        <button class="ghost" id="btnCloseDiary">Fechar</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="small">
+          Grave de 30 a 60 segundos. Sem edição. Sem perfeição.
+          O importante é registrar sua presença na vida.
+        </p>
+
+        <div class="diary-rec">
+          <button class="primary" id="btnRecord">🎙️ Gravar</button>
+          <button class="secondary" id="btnStop" disabled>Parar</button>
+          <span class="small" id="recStatus">Pronto para gravar</span>
+        </div>
+
+        <hr>
+
+        <h3 class="h3">Foto do dia</h3>
+        <p class="small">Uma foto por dia, sem perfeição. Pode ser o céu, seu café, uma flor, um sorriso, um detalhe de vida.</p>
+
+        <div class="photo-row">
+          <input id="photoInput" type="file" accept="image/*" capture="environment" class="photo-input" />
+          <button class="secondary" id="btnSavePhoto">📷 Salvar foto de hoje</button>
+          <button class="ghost" id="btnClearPhoto">Remover</button>
+        </div>
+
+        <div id="photoTodayPreview" class="photo-preview"></div>
+
+        <h3 class="h3">Galeria</h3>
+        <div id="photoGallery" class="photo-gallery"></div>
+
+        <h3 class="section-title">Meus registros</h3>
+        <div id="diaryList" class="diary-list"></div>
+
+        <div class="small" style="margin-top:10px;">
+          Criado por Ricardo de Faria Barros ·
+          <a href="mailto:ricardodefariobarros@gmail.com">ricardodefariobarros@gmail.com</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Alertas -->
+  <div class="modal" id="alertsModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Alertas opcionais</div>
+        <button class="ghost" id="btnCloseAlerts">Fechar</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="small">
+          Alertas servem para lembrar com carinho, não para cobrar.
+          Você escolhe o que quer receber e em que horário.
+        </p>
+
+        <div class="alerts-grid" id="alertsGrid"></div>
+
+        <div class="alerts-row">
+          <button class="secondary" id="btnOpenWeeklyNow">Abrir revisão agora</button>
+        </div>
+
+        <div class="alerts-row">
+          <button class="secondary" id="btnAskNotif">Ativar notificações</button>
+          <span class="small" id="notifState">Status: não verificado</span>
+        </div>
+
+        <div class="small" style="margin-top:10px;">
+          Dica: se as notificações não aparecerem com o app fechado, mantenha o app aberto quando quiser lembrar.
+        </div>
+
+        <div class="small" style="margin-top:10px;">
+          Criado por Ricardo de Faria Barros ·
+          <a href="mailto:ricardodefariobarros@gmail.com">ricardodefariobarros@gmail.com</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Revisão Semanal -->
+  <div class="modal" id="weeklyModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Revisão semanal (5 minutos)</div>
+        <button class="ghost" id="btnCloseWeekly">Fechar</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="small">
+          Saúde (menos sal/açúcar/álcool/gorduras), agenda/exames, conexão humana e um passo de poupança mínima.
+          Sem cobrança. Só direção.
+        </p>
+
+        <div class="weekly-check">
+          <h3 class="section-title">Checklist (bem curtinho)</h3>
+          <div id="weeklyChecklist" class="weekly-list"></div>
+
+          <div class="mission-progress" style="margin-top:10px;">
+            <div class="bar"><div class="bar-fill" id="weeklyBar"></div></div>
+            <div class="small" id="weeklyProgressText"></div>
+          </div>
+        </div>
+
+        <div class="week-actions">
+          <button class="primary" id="btnGoMission">Missão da semana</button>
+          <button class="secondary" id="btnGoMonth">Meu mês</button>
+          <button class="secondary" id="btnGoSavings">Poupança mínima</button>
+        </div>
+
+        <div class="small" style="margin-top:10px;">
+          Criado por Ricardo de Faria Barros ·
+          <a href="mailto:ricardodefariobarros@gmail.com">ricardodefariobarros@gmail.com</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Poupança mínima -->
+  <div class="modal" id="savingsModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Poupança mínima</div>
+        <button class="ghost" id="btnCloseSavings">Fechar</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="small">
+          Não é sobre valor alto. É sobre criar chão e tranquilidade. Um passo pequeno é um passo real.
+        </p>
+
+        <div class="srow">
+          <label class="small">Quanto guardei hoje?</label>
+          <input id="savingsAmount" type="number" inputmode="decimal" placeholder="0" class="alert-time" />
+          <button class="primary" id="btnSaveSavings">Salvar</button>
+        </div>
+
+        <div class="small" id="savingsHint" style="margin-top:8px;"></div>
+
+        <hr>
+
+        <h3 class="section-title">Este mês</h3>
+        <div id="savingsMonth" class="small"></div>
+
+        <div class="small" style="margin-top:10px;">
+          Criado por Ricardo de Faria Barros ·
+          <a href="mailto:ricardodefariobarros@gmail.com">ricardodefariobarros@gmail.com</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('./sw.js');
+    }
+  </script>
+</body>
+</html>
