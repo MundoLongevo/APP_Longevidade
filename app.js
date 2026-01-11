@@ -571,8 +571,7 @@ function exportExpensesCSV(daysBack=30){
     const k=`${y}-${m}-${dd}`;
     const exps = (entries[k]?.expenses) || [];
     for(const it of exps){
-      rows.push([k, (it.reason||"").replace(/
-/g," "), (it.category||""), String(it.value||0).replace(".",",")]);
+      rows.push([k, (it.reason||"").replace(/\n/g," "), (it.category||""), String(it.value||0).replace(".",",")]);
     }
   }
   const csv = rows.map(r => r.map(cell => {

@@ -1,4 +1,4 @@
-const CACHE_NAME = "fq5c-cache-v8";
+const CACHE_NAME = "fq5c-cache-v9";
 const CACHE = "fq5c-cache-v1";
 const ASSETS = [
   "lib/jspdf.umd.min.js","./","./index.html","./styles.css","./app.js","./manifest.json","./icon-192.png","./icon-512.png"];
