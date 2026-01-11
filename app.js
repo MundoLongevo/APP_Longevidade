@@ -1961,3 +1961,33 @@ function generateWeeklyPDF(endDayKey){
 
   doc.save(`FQ5C_Semanal_${endDayKey}.pdf`);
 }
+
+
+/* ===== Botões PDF (visíveis na aba Hoje) ===== */
+(function bindPdfButtons(){
+  const dailyBtn = document.getElementById("btnDailyPDF");
+  const weeklyBtn = document.getElementById("btnWeeklyPDF");
+  function todayKey(){
+    const d = new Date(); d.setHours(0,0,0,0);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${dd}`;
+  }
+  if(dailyBtn){
+    dailyBtn.addEventListener("click", ()=>{
+      const k = todayKey();
+      if(typeof generateDailyPDF === "function") generateDailyPDF(k);
+      else alert("PDF do dia não disponível nesta versão.");
+    });
+  }
+  if(weeklyBtn){
+    weeklyBtn.addEventListener("click", ()=>{
+      const k = todayKey();
+      if(typeof generateWeeklyPDF === "function") generateWeeklyPDF(k);
+      else alert("PDF semanal não disponível nesta versão.");
+    });
+  }
+})();
+
+const difficultDays = false;

@@ -421,99 +421,43 @@ body{ padding-bottom: env(safe-area-inset-bottom); }
 
 .container{ max-width: 980px; margin: 0 auto; padding: 14px; }
 
-input, select, textarea, button{
-  font-size: 1rem;
-}
+input, select, textarea, button{ font-size: 1rem; }
 button{ touch-action: manipulation; }
 
-.pill-head, .modal-head{
-  gap: 10px;
-}
-.pill-actions{
-  display:flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-.row{
-  flex-wrap: wrap;
-}
-.row > *{
-  min-width: 0;
-}
+.pill-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+.row{ flex-wrap:wrap; }
+.row > *{ min-width:0; }
 
 @media (max-width: 680px){
-  :root{ font-size: 18px; } /* leitura confortável em celular */
+  :root{ font-size: 18px; }
   .container{ padding: 12px; }
 
-  /* topo / navegação */
-  .topbar{
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    backdrop-filter: blur(8px);
-  }
-  .tabs{
-    display:flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .tabs button{
-    flex: 1 1 auto;
-    padding: 12px 14px;
-    border-radius: 16px;
-  }
+  .topbar{ position: sticky; top:0; z-index: 20; }
 
-  /* cards e “pills” */
-  .card, .pill{
-    padding: 14px;
-    border-radius: 18px;
-  }
-  .pill-head{
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-  .pill-actions{
-    width: 100%;
-    justify-content: flex-start;
-  }
-  .pill-actions button{
-    width: 100%;
-  }
+  .tabs{ display:flex; flex-wrap:wrap; gap:8px; }
+  .tabs button{ flex: 1 1 auto; padding:12px 14px; border-radius:16px; }
 
-  /* botões grandes e fáceis de tocar */
-  button.primary, button.secondary, button.ghost{
-    min-height: 46px;
-  }
+  .card, .pill{ padding:14px; border-radius:18px; }
+  .pill-head{ flex-wrap:wrap; align-items:flex-start; gap:10px; }
+  .pill-actions{ width:100%; justify-content:flex-start; }
+  .pill-actions button{ width:100%; }
 
-  /* tabelas */
-  .table{
-    font-size: 0.92rem;
-  }
-  .table th, .table td{
-    padding: 8px;
-  }
+  button.primary, button.secondary, button.ghost{ min-height:46px; }
 
-  /* modais */
-  .modal-card{
-    width: calc(100% - 18px);
-    max-width: 720px;
-    margin: 0 9px;
-    border-radius: 18px;
-  }
-  .modal-body{
-    max-height: 78vh;
-    overflow:auto;
-  }
+  .modal-card{ width: calc(100% - 18px); margin: 0 9px; border-radius:18px; }
+  .modal-body{ max-height:78vh; overflow:auto; }
 }
 
 @media (max-width: 420px){
   :root{ font-size: 19px; }
-  .tabs button{
-    padding: 12px 12px;
-  }
-  .verb-icon{
-    width: 40px;
-    height: 40px;
-  }
+}
+
+
+/* ===== Desempenho no celular (evita travamentos) ===== */
+@media (max-width: 680px){
+  .topbar{ backdrop-filter: none !important; }
+  .card, .pill, .modal-card{ box-shadow: none !important; }
+}
+@media (prefers-reduced-motion: reduce){
+  *{ animation:none !important; transition:none !important; scroll-behavior:auto !important; }
 }

@@ -1,5 +1,7 @@
+const CACHE_NAME = "fq5c-cache-v8";
 const CACHE = "fq5c-cache-v1";
-const ASSETS = ["./","./index.html","./styles.css","./app.js","./manifest.json","./icon-192.png","./icon-512.png"];
+const ASSETS = [
+  "lib/jspdf.umd.min.js","./","./index.html","./styles.css","./app.js","./manifest.json","./icon-192.png","./icon-512.png"];
 
 self.addEventListener("install", (e)=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));
