@@ -1,48 +1,154 @@
-const VERBS=["Fazer","Querer","Cuidar","Conhecer","Conversar","Compartilhar","Curtir"];
-const PIN_KEY="fq5c_pin";
-const DATA_KEY="fq5c_data";
+/* ===============================
+   FQ5C – APP.JS
+   Versão estável com PIN local
+   Data local corrigida
+   =============================== */
 
-function hasPIN(){return !!localStorage.getItem(PIN_KEY);}
-function checkPIN(v){return localStorage.getItem(PIN_KEY)===v;}
-function showPIN(){document.getElementById("pinOverlay").classList.remove("hidden");}
-function hidePIN(){document.getElementById("pinOverlay").classList.add("hidden");}
+/* -------- CONFIGURAÇÕES -------- */
+const VERBS = [
+  "Fazer",
+  "Querer",
+  "Cuidar",
+  "Conhecer",
+  "Conversar",
+  "Compartilhar",
+  "Curtir"
+];
 
-document.addEventListener("DOMContentLoaded",()=>{
-  if(hasPIN()) showPIN();
-  document.getElementById("pinBtn").onclick=()=>{
-    const v=document.getElementById("pinInput").value;
-    if(checkPIN(v)) hidePIN(); else alert("Código incorreto");
-  };
-  document.getElementById("pinSkip").onclick=()=>hidePIN();
+const DATA_KEY = "fq5c_data";
+const PIN_KEY  = "fq5c_pin";
 
-  const data=JSON.parse(localStorage.getItem(DATA_KEY)||"{}");
-  const today=new Date().toISOString().slice(0,10);
-  data[today]=data[today]||{verbs:{},memory:""};
+/* -------- DATA LOCAL (CORRIGIDA) -------- */
+const now = new Date();
+const today =
+  now.getFullYear() + "-" +
+  String(now.getMonth() + 1).padStart(2, "0") + "-" +
+  String(now.getDate()).padStart(2, "0");
 
-  const verbsDiv=document.getElementById("verbs");
-  VERBS.forEach(v=>{
-    const d=document.createElement("div");
-    d.className="verb";
-    d.innerHTML=`<label><input type="checkbox"/> ${v}</label>
-    <textarea placeholder="Registro livre"></textarea>`;
-    const chk=d.querySelector("input");
-    const ta=d.querySelector("textarea");
-    chk.checked=!!data[today].verbs[v];
-    ta.value=data[today].verbs[v]||"";
-    chk.onchange=()=>{data[today].verbs[v]=ta.value;save();updatePresence();};
-    ta.oninput=()=>{data[today].verbs[v]=ta.value;save();};
-    verbsDiv.appendChild(d);
+/* -------- PIN LOCAL -------- */
+function hasPIN() {
+  return !!localStorage.getItem(PIN_KEY);
+}
+
+function checkPIN(value) {
+  return localStorage.getItem(PIN_KEY) === value;
+}
+
+function showPIN() {
+  const overlay = document.getElementById("pinOverlay");
+  if (overlay) overlay.classList.remove("hidden");
+}
+
+function hidePIN() {
+  const overlay = document.getElementById("pinOverlay");
+  if (overlay) overlay.classList.add("hidden");
+}
+
+/* -------- INICIALIZAÇÃO -------- */
+document.addEventListener("DOMContentLoaded", () => {
+
+  /* PIN */
+  if (hasPIN()) showPIN();
+
+  const pinBtn  = document.getElementById("pinBtn");
+  const pinSkip = document.getElementById("pinSkip");
+  const pinInput = document.getElementById("pinInput");
+
+  if (pinBtn) {
+    pinBtn.onclick = () => {
+      if (checkPIN(pinInput.value)) {
+        hidePIN();
+      } else {
+        alert("Código incorreto");
+      }
+    };
+  }
+
+  if (pinSkip) {
+    pinSkip.onclick = () => hidePIN();
+  }
+
+  /* -------- DADOS -------- */
+  let data = JSON.parse(localStorage.getItem(DATA_KEY) || "{}");
+
+  if (!data[today]) {
+    data[today] = {
+      verbs: {},
+      memory: ""
+    };
+  }
+
+  /* -------- VERBOS -------- */
+  const verbsContainer = document.getElementById("verbs");
+  verbsContainer.innerHTML = "";
+
+  VERBS.forEach(verb => {
+    const block = document.createElement("div");
+    block.className = "verb";
+
+    block.innerHTML = `
+      <label>
+        <input type="checkbox" />
+        ${verb}
+      </label>
+      <textarea placeholder="Registro livre"></textarea>
+    `;
+
+    const checkbox = block.querySelector("input");
+    const textarea = block.querySelector("textarea");
+
+    checkbox.checked = !!data[today].verbs[verb];
+    textarea.value   = data[today].verbs[verb] || "";
+
+    checkbox.onchange = () => {
+      if (!textarea.value.trim()) {
+        data[today].verbs[verb] = "";
+      }
+      saveData();
+      updatePresence();
+    };
+
+    textarea.oninput = () => {
+      data[today].verbs[verb] = textarea.value;
+      saveData();
+      updatePresence();
+    };
+
+    verbsContainer.appendChild(block);
   });
 
-  const mem=document.getElementById("memoryInput");
-  mem.value=data[today].memory||"";
-  mem.oninput=()=>{data[today].memory=mem.value;save();};
-  document.getElementById("saveMemory").onclick=()=>alert("Memória guardada");
+  /* -------- MEMÓRIA DO DIA -------- */
+  const memoryInput = document.getElementById("memoryInput");
+  const saveMemoryBtn = document.getElementById("saveMemory");
 
-  function updatePresence(){
-    const c=Object.values(data[today].verbs).filter(v=>v&&v.trim()).length;
-    document.getElementById("presence").innerText=`Presença de hoje: ${c}/7`;
+  if (memoryInput) {
+    memoryInput.value = data[today].memory || "";
+    memoryInput.oninput = () => {
+      data[today].memory = memoryInput.value;
+      saveData();
+    };
   }
-  function save(){localStorage.setItem(DATA_KEY,JSON.stringify(data));}
+
+  if (saveMemoryBtn) {
+    saveMemoryBtn.onclick = () => {
+      alert("Memória guardada.");
+    };
+  }
+
+  /* -------- PRESENÇA -------- */
+  function updatePresence() {
+    const count = Object.values(data[today].verbs)
+      .filter(v => v && v.trim().length > 0).length;
+
+    const presenceEl = document.getElementById("presence");
+    if (presenceEl) {
+      presenceEl.innerText = `Presença de hoje: ${count}/7`;
+    }
+  }
+
+  function saveData() {
+    localStorage.setItem(DATA_KEY, JSON.stringify(data));
+  }
+
   updatePresence();
 });
