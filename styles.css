@@ -1,0 +1,10 @@
+body{font-family:Arial,Helvetica,sans-serif;background:#f6fff2;margin:0}
+header{background:#2f8f2f;color:#fff;padding:1rem;text-align:center}
+main{padding:1rem}
+.verb{background:#fff;margin:.5rem 0;padding:.5rem;border-radius:10px}
+textarea{width:100%;min-height:80px;border-radius:8px;padding:.5rem}
+button{padding:.5rem 1rem;border:none;border-radius:8px;margin-top:.5rem}
+.secondary{background:#ddd}
+.pin-overlay{position:fixed;inset:0;background:#000000aa;display:flex;align-items:center;justify-content:center}
+.pin-overlay.hidden{display:none}
+.pin-box{background:#fff;padding:1rem;border-radius:12px;width:90%;max-width:320px;text-align:center}

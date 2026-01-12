@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FQ5C – Longevidade Ativa</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<div id="pinOverlay" class="pin-overlay hidden">
+  <div class="pin-box">
+    <h2>🔐 Proteção dos Registros</h2>
+    <p>Digite seu código</p>
+    <input type="password" id="pinInput" maxlength="4" inputmode="numeric"/>
+    <button id="pinBtn">Entrar</button>
+    <button id="pinSkip" class="secondary">Entrar sem PIN</button>
+  </div>
+</div>
+
+<header><h1>FQ5C – Hoje</h1></header>
+
+<main>
+  <p id="presence"></p>
+  <div id="verbs"></div>
+
+  <section class="memory">
+    <h3>Memória do Dia</h3>
+    <textarea id="memoryInput" placeholder="Se quiser, deixe aqui uma lembrança, uma frase, um sentimento ou algo que marcou o seu dia"></textarea>
+    <button id="saveMemory" class="secondary">Guardar memória de hoje</button>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
