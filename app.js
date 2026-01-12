@@ -577,10 +577,8 @@ function exportExpensesCSV(daysBack=30){
   const csv = rows.map(r => r.map(cell => {
     const s = String(cell ?? "");
     const safe = s.includes('"') ? s.replace(/"/g,'""') : s;
-    return (safe.includes(",") || safe.includes("
-") || safe.includes('"')) ? `"${safe}"` : safe;
-  }).join(",")).join("
-");
+    return (safe.includes(",") || safe.includes("\n") || safe.includes('"')) ? `"${safe}"` : safe;
+  }).join(",")).join("\n");
 
   const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
